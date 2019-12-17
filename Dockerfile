@@ -12,6 +12,7 @@ WORKDIR /app
 
 COPY --from=install-deps /app/node_modules ./node_modules
 COPY . ./
+RUN cp .env.example .env
 
 RUN npm run build
 

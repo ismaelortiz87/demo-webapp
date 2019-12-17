@@ -14,7 +14,7 @@ class App extends Component {
   };
 
   async getData() {
-    await fetch("http://localhost:3001/")
+    await fetch(process.env.REACT_APP_API_URL)
       .then(data => data.json())
       .then((result) => {
         this.setState({

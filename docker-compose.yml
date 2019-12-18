@@ -1,0 +1,11 @@
+version: "3.7"
+
+services:
+  demo-webapp:
+    image: demo-webapp
+    container_name: demo-webapp
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"

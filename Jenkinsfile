@@ -120,9 +120,9 @@ pipeline {
           label: "Posting ReviewApp data to Kanon...",
           script: """
             curl \
-              -H \"Content-Type: application/json" \
-              -H "authToken: as5uNvV5bKAa4Bzg24Bc" \
-              -d '{"branch": "${webBranch}", "apiURL": "http://${hostPublic}:3001", "jiraIssueKey": "${jiraId}", "build": "${BUILD_NUMBER}", "webAppLink": "${hostPublic}"' \
+              -H 'Content-Type: application/json' \
+              -H 'authToken: as5uNvV5bKAa4Bzg24Bc' \
+              -d '{"branch": "${webBranch}", "apiURL": "http://${hostPublic}:3001", "jiraIssueKey": "${jiraId}", "build": "${BUILD_NUMBER}", "webAppLink": "http://${hostPublic}"' \
               -X POST \
               https://kanon-api.gbhlabs.net/api/reviewapps
           """

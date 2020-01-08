@@ -120,9 +120,9 @@ pipeline {
           label: "Posting ReviewApp data to Kanon...",
           script: """
             curl \
-              -H 'Content-Type: application/json' \
-              -H 'authToken: as5uNvV5bKAa4Bzg24Bc' \
-              -d '{"branch": "${webBranch}", "apiURL": "http://${hostPublic}:3001", "jiraIssueKey": "${jiraId}", "build": "${BUILD_NUMBER}", "webAppLink": "http://${hostPublic}"}' \
+              -H "Content-Type: application/json" \
+              -H "authToken: as5uNvV5bKAa4Bzg24Bc" \
+              -d \"{"branch": "${webBranch}", "apiURL": "http://${hostPublic}:3001", "jiraIssueKey": "${jiraId}", "build": "${BUILD_NUMBER}", "webAppLink": "http://${hostPublic}"}\" \
               -X POST \
               https://kanon-api.gbhlabs.net/api/reviewapps
           """
@@ -131,17 +131,6 @@ pipeline {
         prettyPrint("ReviewApp URL: http://${hostPublic}")
         echo getTaskLink(webBranch)
         input message: "Validation finished?"
-
-        sh(
-          label: "Posting ReviewApp status to Kanon...",
-          script: """
-            curl \
-              -H 'Content-Type: application/json' \
-              -H 'authToken: as5uNvV5bKAa4Bzg24Bc' \
-              -X POST \
-              https://kanon-api.gbhlabs.net/api/reviewapps/deactivation?build=${BUILD_NUMBER}\\&branch=${webBranch}
-          """
-        )
       }
     }
   }
@@ -154,6 +143,16 @@ pipeline {
       office365ConnectorSend color:"50bddf", message: "CI pipeline for ${webBranch} completed succesfully.", status:"SUCCESS", webhookUrl:"${officeWebhookUrl}"
     }
     always {
+      sh(
+        label: "Posting ReviewApp status to Kanon...",
+        script: """
+          curl \
+            -H "Content-Type: application/json" \
+            -H "authToken: as5uNvV5bKAa4Bzg24Bc" \
+            -X POST \
+            https://kanon-api.gbhlabs.net/api/reviewapps/deactivation?build=${BUILD_NUMBER}\\&branch=${webBranch}
+        """
+      )
       sh(
         label: "Cleaning up WebApp containers...",
         script: "docker-compose down --remove-orphans --volumes --rmi local"

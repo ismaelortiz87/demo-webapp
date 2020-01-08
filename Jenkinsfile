@@ -120,9 +120,9 @@ pipeline {
           label: "Posting ReviewApp data to Kanon...",
           script: """
             curl \
-              -H 'Content-Type: application/json' \
-              -H 'authToken: as5uNvV5bKAa4Bzg24Bc' \
-              -d '{"branch": "${webBranch}", "apiURL": "http://${hostPublic}:3001", "jiraIssueKey": "${jiraId}", "build": "${BUILD_NUMBER}", "webAppLink": "http://${hostPublic}"' \
+              -H \'Content-Type: application/json\' \
+              -H \'authToken: as5uNvV5bKAa4Bzg24Bc\' \
+              -d \'{"branch": "${webBranch}", "apiURL": "http://${hostPublic}:3001", "jiraIssueKey": "${jiraId}", "build": "${BUILD_NUMBER}", "webAppLink": "http://${hostPublic}"\' \
               -X POST \
               https://kanon-api.gbhlabs.net/api/reviewapps
           """
@@ -136,8 +136,8 @@ pipeline {
           label: "Posting ReviewApp status to Kanon...",
           script: """
             curl \
-              -H "Content-Type: application/json" \
-              -H "authToken: as5uNvV5bKAa4Bzg24Bc" \
+              -H \"Content-Type: application/json\" \
+              -H \"authToken: as5uNvV5bKAa4Bzg24Bc\" \
               -X POST \
               https://kanon-api.gbhlabs.net/api/reviewapps/deactivation?build=${BUILD_NUMBER}\\&branch=${webBranch}
           """

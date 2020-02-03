@@ -1,3 +1,3 @@
 # Demo WebApp
 
-> TODO
+> This is a demo project. It was made using ReactJS.

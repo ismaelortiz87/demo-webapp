@@ -11,10 +11,12 @@ pipeline {
   }
 
   environment {
-    nodeEnv = "development"
-    repoBaseURL = "git@github.com:soluciones-gbh"
-    apiPath = "/srv/demo-api"
-    officeWebhookUrl = "https://outlook.office.com/webhook/fd2e0e97-97df-4057-a9df-ff2e0c66196a@64aa16ab-5980-47d5-a944-3f8cc9bbdfa2/IncomingWebhook/6c2ab55478d146efbe4041db69f97108/217bfa4b-9515-4221-b5b7-6858ebd6d4b5"
+    sonarqube_url     = "https://eris.gbhapps.com"
+    sonarqube_token   = credentials('sonar_token')
+    nodeEnv           = "development"
+    repoBaseURL       = "git@github.com:soluciones-gbh"
+    apiPath           = "/srv/demo-api"
+    officeWebhookUrl  = "https://outlook.office.com/webhook/fd2e0e97-97df-4057-a9df-ff2e0c66196a@64aa16ab-5980-47d5-a944-3f8cc9bbdfa2/IncomingWebhook/6c2ab55478d146efbe4041db69f97108/217bfa4b-9515-4221-b5b7-6858ebd6d4b5"
   }
 
   parameters {
@@ -80,28 +82,50 @@ pipeline {
     }
 
     stage("Initialize") {
-      options {
-        timeout(
-          time: 15,
-          unit: "MINUTES"
-        )
-      }
-      steps {
-        echo "This step will configure the application to be provisioned as a Review environment."
-        sh(
-          label: "Spinning up the WebApp containers...",
-          script: "docker-compose up -d"
-        )
-        sh(
-          label: "Spinning up the API containers...",
-          script: "cd ${apiPath} && docker-compose up -d"
-        )
-        sh(
-          label: "Sleep for 5 seconds to ensure containers are healthy...",
-          script: "sleep 5"
-        )
-
-        input message: "Do you want to start the validation process? Pipeline will self-destruct in 15 minutes if no input is provided."
+      parallel {
+        stage('Build') {
+          steps {
+            echo "This step will configure the application to be provisioned as a Review environment."
+            sh(
+              label: "Spinning up the WebApp containers...",
+              script: "docker-compose up -d"
+            )
+            sh(
+              label: "Spinning up the API containers...",
+              script: "cd ${apiPath} && docker-compose up -d"
+            )
+            sh(
+              label: "Sleep for 5 seconds to ensure containers are healthy...",
+              script: "sleep 5"
+            )
+          }
+        }
+        stage('Test') {
+          steps {
+            echo "This step will test the code with sonarqube"
+            sh(
+              label: "Spinning up the WebApp containers...",
+              script: """
+                cd ${apiPath}
+                sonar-scanner \
+                  -Dsonar.projectName=Demo-Webapp \
+                  -Dsonar.projectKey=Demo-Webapp \
+                  -Dsonar.sources=. \
+                  -Dsonar.host.url=${sonarqube_url} \
+                  -Dsonar.login=${sonarqube_token} \
+                  -Dsonar.projectVersion=${jiraId}
+                cd ${webPath}
+                sonar-scanner \
+                  -Dsonar.projectName=Demo-API \
+                  -Dsonar.projectKey=Demo-API \
+                  -Dsonar.sources=. \
+                  -Dsonar.host.url=${} \
+                  -Dsonar.login=${sonarqube_token} \
+                  -Dsonar.projectVersion=${jiraId}
+              """
+            )
+          }
+        }
       }
     }
 

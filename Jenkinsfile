@@ -89,7 +89,7 @@ pipeline {
             }
             echo "This step will test the code with sonarqube"
             sh(
-              label: "Spinning up the WebApp containers...",
+              label: "Testing with sonarqube",
               script: """
               sonar-scanner \
                   -Dsonar.projectName=Demo-Webapp \
@@ -103,7 +103,7 @@ pipeline {
                   -Dsonar.projectName=Demo-API \
                   -Dsonar.projectKey=Demo-API \
                   -Dsonar.sources=. \
-                  -Dsonar.host.url=${} \
+                  -Dsonar.host.url=${sonarqube_url} \
                   -Dsonar.login=${sonarqube_token} \
                   -Dsonar.projectVersion=${jiraId}
               """
@@ -266,5 +266,5 @@ def cloneProject(String path, String repo, String branch) {
  * Get the ticket ID using the branch name.
  */
 def getTicketIdFromBranchName(String branchName) {
-  return branchName.findAll(/(DP-[0-9]+)/)[0];
+  return branchName.findAll(/(DO-[0-9]+)/)[0];
 }

@@ -11,6 +11,8 @@ pipeline {
   }
 
   environment {
+    sonarqube_webapp  = "Demo-Webapp"
+    sonarqube_api     = "Demo-Api"
     sonarqube_url     = "https://eris.gbhapps.com"
     sonarqube_token   = credentials('sonar_token')
     nodeEnv           = "development"
@@ -82,7 +84,7 @@ pipeline {
             )
           }
         }
-        stage('Test') {
+        stage('SAST') {
           steps {
             script {
               jiraId = getTicketIdFromBranchName("${webBranch}");
@@ -92,16 +94,16 @@ pipeline {
               label: "Testing with sonarqube",
               script: """
               sonar-scanner \
-                  -Dsonar.projectName=Demo-Webapp \
-                  -Dsonar.projectKey=Demo-Webapp \
+                  -Dsonar.projectName=${sonarqube_webapp} \
+                  -Dsonar.projectKey=${sonarqube_webapp} \
                   -Dsonar.sources=. \
                   -Dsonar.host.url=${sonarqube_url} \
                   -Dsonar.login=${sonarqube_token} \
                   -Dsonar.projectVersion=${jiraId}
               cd ${apiPath}
                 sonar-scanner \
-                  -Dsonar.projectName=Demo-API \
-                  -Dsonar.projectKey=Demo-API \
+                  -Dsonar.projectName=${sonarqube_api} \
+                  -Dsonar.projectKey=${sonarqube_api} \
                   -Dsonar.sources=. \
                   -Dsonar.host.url=${sonarqube_url} \
                   -Dsonar.login=${sonarqube_token} \

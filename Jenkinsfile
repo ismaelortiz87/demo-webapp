@@ -64,44 +64,27 @@ pipeline {
     }
 
     stage("Setup") {
-      steps {
-        echo "This step will configure the application to be provisioned as a Review environment."
-        sh(
-          label: "Adding API_URL to dotenv...",
-          script: "sed -i 's|REACT_APP_API_URL=.*|REACT_APP_API_URL=http://${hostPublic}:3001|' .env.example"
-        )
-        sh(
-          label: "Building WebApp docker images...",
-          script: "docker-compose build --no-cache"
-        )
-        sh(
-          label: "Building API docker images...",
-          script: "cd ${apiPath} && docker-compose build --no-cache"
-        )
-      }
-    }
-
-    stage("Initialize") {
       parallel {
-        stage('Build') {
-          steps {
-            echo "This step will configure the application to be provisioned as a Review environment."
-            sh(
-              label: "Spinning up the WebApp containers...",
-              script: "docker-compose up -d"
-            )
-            sh(
-              label: "Spinning up the API containers...",
-              script: "cd ${apiPath} && docker-compose up -d"
-            )
-            sh(
-              label: "Sleep for 5 seconds to ensure containers are healthy...",
-              script: "sleep 5"
-            )
-          }
+        steps {
+          echo "This step will configure the application to be provisioned as a Review environment."
+          sh(
+            label: "Adding API_URL to dotenv...",
+            script: "sed -i 's|REACT_APP_API_URL=.*|REACT_APP_API_URL=http://${hostPublic}:3001|' .env.example"
+          )
+          sh(
+            label: "Building WebApp docker images...",
+            script: "docker-compose build --no-cache"
+          )
+          sh(
+            label: "Building API docker images...",
+            script: "cd ${apiPath} && docker-compose build --no-cache"
+          )
         }
         stage('Test') {
           steps {
+            script {
+              jiraId = getTicketIdFromBranchName("${webBranch}");
+            }
             echo "This step will test the code with sonarqube"
             sh(
               label: "Spinning up the WebApp containers...",
@@ -125,6 +108,26 @@ pipeline {
               """
             )
           }
+        }
+      }
+    } 
+
+    stage("Initialize") {
+      stage('Build') {
+        steps {
+          echo "This step will configure the application to be provisioned as a Review environment."
+          sh(
+            label: "Spinning up the WebApp containers...",
+            script: "docker-compose up -d"
+          )
+          sh(
+            label: "Spinning up the API containers...",
+            script: "cd ${apiPath} && docker-compose up -d"
+          )
+          sh(
+            label: "Sleep for 5 seconds to ensure containers are healthy...",
+            script: "sleep 5"
+          )
         }
       }
     }

@@ -91,15 +91,14 @@ pipeline {
             sh(
               label: "Spinning up the WebApp containers...",
               script: """
-                cd ${apiPath}
-                sonar-scanner \
+              sonar-scanner \
                   -Dsonar.projectName=Demo-Webapp \
                   -Dsonar.projectKey=Demo-Webapp \
                   -Dsonar.sources=. \
                   -Dsonar.host.url=${sonarqube_url} \
                   -Dsonar.login=${sonarqube_token} \
                   -Dsonar.projectVersion=${jiraId}
-                cd ${webPath}
+              cd ${apiPath}
                 sonar-scanner \
                   -Dsonar.projectName=Demo-API \
                   -Dsonar.projectKey=Demo-API \

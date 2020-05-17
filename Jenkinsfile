@@ -153,19 +153,19 @@ pipeline {
             input message: "Validation finished?"
           }
         }
-        stage("DAST") {
-          steps {
-            try {
+        try {
+          stage("DAST") {
+            steps {            
               sh(
                 label: "Scaning App with ZAP",
                 script: """
                   docker run -t owasp/zap2docker-stable zap-full-scan.py -t http://${hostPublic}
                 """
-              )
-            } catch (err) {
-                echo err.getMessage()
+              )            
             }
           }
+        } catch (err) {
+            echo err.getMessage()
         }
       }
     }      

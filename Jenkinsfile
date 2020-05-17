@@ -64,7 +64,7 @@ pipeline {
       }
     }
 
-    stage("Setup") {
+    stage("Setup & Test") {
       parallel {
         stage('Build') {
           steps {

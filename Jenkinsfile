@@ -125,35 +125,47 @@ pipeline {
     }
 
     stage("Validation") {
-      options {
-        timeout(
-          time: 4,
-          unit: "HOURS"
-        )
-      }
-      steps {
-        script {
-          jiraId = getTicketIdFromBranchName("${webBranch}");
+      parallel {
+        stage("Kanon") {
+          options {
+            timeout(
+              time: 4,
+              unit: "HOURS"
+              )
+          }
+          steps {
+            script {
+              jiraId = getTicketIdFromBranchName("${webBranch}");
+            }
+            sh(
+              label: "Posting ReviewApp data to Kanon...",
+              script: """
+                curl \
+                  -H "Content-Type: application/json" \
+                  -H "authToken: as5uNvV5bKAa4Bzg24Bc" \
+                  -d '{"branch": "${webBranch}", "apiURL": "http://${hostPublic}:3001", "jiraIssueKey": "${jiraId}", "build": "${BUILD_NUMBER}", "webAppLink": "http://${hostPublic}"}' \
+                  -X POST \
+                  https://kanon-api.gbhlabs.net/api/reviewapps
+              """
+            )  
+            prettyPrint("ReviewApp URL: http://${hostPublic}")
+            echo getTaskLink(webBranch)
+            input message: "Validation finished?"
+          }
         }
-        sh(
-          label: "Posting ReviewApp data to Kanon...",
-          script: """
-            curl \
-              -H "Content-Type: application/json" \
-              -H "authToken: as5uNvV5bKAa4Bzg24Bc" \
-              -d '{"branch": "${webBranch}", "apiURL": "http://${hostPublic}:3001", "jiraIssueKey": "${jiraId}", "build": "${BUILD_NUMBER}", "webAppLink": "http://${hostPublic}"}' \
-              -X POST \
-              https://kanon-api.gbhlabs.net/api/reviewapps
-          """
-        )
-
-        prettyPrint("ReviewApp URL: http://${hostPublic}")
-        echo getTaskLink(webBranch)
-        input message: "Validation finished?"
+        stage("DAST") {
+          steps {
+            sh(
+              label: "Scaning App with ZAP",
+              script: """
+                docker run -t owasp/zap2docker-stable zap-full-scan.py -t http://${hostPublic}
+              """
+            )
+          }
+        }
       }
-    }
+    }      
   }
-
   post {
     failure {
       office365ConnectorSend color: "f40909", message: "CI pipeline for ${webBranch} failed. Please check the logs for more information.", status: "FAILED", webhookUrl: "${officeWebhookUrl}"

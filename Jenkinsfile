@@ -154,12 +154,10 @@ pipeline {
           }
         }
         stage("DAST") {
-          steps {       
-            try{
-              sh "docker run -t owasp/zap2docker-stable zap-full-scan.py -t http://${hostPublic}"
-            } catch (err) {
-                echo err.getMessage()
-            }
+          try{
+            sh "docker run -t owasp/zap2docker-stable zap-full-scan.py -t http://${hostPublic}"
+          } catch (err) {
+              echo err.getMessage()
           }
         }
       }

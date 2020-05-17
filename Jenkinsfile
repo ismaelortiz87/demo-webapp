@@ -154,46 +154,50 @@ pipeline {
           }
         }
         stage("DAST") {
-          steps {       
+          steps {
             catchError {
-              sh "docker run -t owasp/zap2docker-stable zap-full-scan.py -t http://${hostPublic}"
+              sh(
+                label: "Scaning App with ZAP",
+                script: """
+                  docker run -t owasp/zap2docker-stable zap-full-scan.py -t http://${hostPublic}
+                """
+              )
             }
-            echo currentBuild.result
           }
         }
       }
+    }      
+  }
+  post {
+    failure {
+      office365ConnectorSend color: "f40909", message: "CI pipeline for ${webBranch} failed. Please check the logs for more information.", status: "FAILED", webhookUrl: "${officeWebhookUrl}"
     }
-    post {
-      failure {
-        office365ConnectorSend color: "f40909", message: "CI pipeline for ${webBranch} failed. Please check the logs for more information.", status: "FAILED", webhookUrl: "${officeWebhookUrl}"
-      }
-      success {
-        office365ConnectorSend color:"50bddf", message: "CI pipeline for ${webBranch} completed succesfully.", status:"SUCCESS", webhookUrl:"${officeWebhookUrl}"
-      }
-      always {
-        sh(
-          label: "Posting ReviewApp status to Kanon...",
-          script: """
-            curl \
-              -H "Content-Type: application/json" \
-              -H "authToken: as5uNvV5bKAa4Bzg24Bc" \
-              -X POST \
-              https://kanon-api.gbhlabs.net/api/reviewapps/deactivation?build=${BUILD_NUMBER}\\&branch=${webBranch}
-          """
-        )
-        sh(
-          label: "Cleaning up WebApp containers...",
-          script: "docker-compose down --remove-orphans --volumes --rmi local"
-        )
-        sh(
-          label: "Cleaning up API containers...",
-          script: "cd ${apiPath} && docker-compose down --remove-orphans --volumes --rmi local"
-        )
-        sh(
-          label: "Cleaning up directories...",
-          script: "rm -rf ${apiPath}"
-        )
-      }
+    success {
+      office365ConnectorSend color:"50bddf", message: "CI pipeline for ${webBranch} completed succesfully.", status:"SUCCESS", webhookUrl:"${officeWebhookUrl}"
+    }
+    always {
+      sh(
+        label: "Posting ReviewApp status to Kanon...",
+        script: """
+          curl \
+            -H "Content-Type: application/json" \
+            -H "authToken: as5uNvV5bKAa4Bzg24Bc" \
+            -X POST \
+            https://kanon-api.gbhlabs.net/api/reviewapps/deactivation?build=${BUILD_NUMBER}\\&branch=${webBranch}
+        """
+      )
+      sh(
+        label: "Cleaning up WebApp containers...",
+        script: "docker-compose down --remove-orphans --volumes --rmi local"
+      )
+      sh(
+        label: "Cleaning up API containers...",
+        script: "cd ${apiPath} && docker-compose down --remove-orphans --volumes --rmi local"
+      )
+      sh(
+        label: "Cleaning up directories...",
+        script: "rm -rf ${apiPath}"
+      )
     }
   }
 }

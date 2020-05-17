@@ -155,7 +155,7 @@ pipeline {
         }
         stage("DAST") {
           steps {
-            catchError {
+            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
               sh(
                 label: "Scaning App with ZAP",
                 script: """
@@ -166,7 +166,7 @@ pipeline {
           }
         }
       }
-    }      
+    }
   }
   post {
     failure {

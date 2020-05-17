@@ -154,17 +154,15 @@ pipeline {
           }
         }
         stage("DAST") {
-            steps {       
-              catchError {
-                sh "docker run -t owasp/zap2docker-stable zap-full-scan.py -t http://${hostPublic}"
-              }
-              echo currentBuild.result
+          steps {       
+            catchError {
+              sh "docker run -t owasp/zap2docker-stable zap-full-scan.py -t http://${hostPublic}"
             }
+            echo currentBuild.result
           }
         }
       }
-    }      
-  }
+    }
   post {
     failure {
       office365ConnectorSend color: "f40909", message: "CI pipeline for ${webBranch} failed. Please check the logs for more information.", status: "FAILED", webhookUrl: "${officeWebhookUrl}"

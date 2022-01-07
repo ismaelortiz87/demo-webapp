@@ -9,7 +9,7 @@ function App() {
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:3001/")
+    fetch(process.env.REACT_APP_API_URL)
       .then(res => res.json())
       .then((data) => {
         setIsLoaded(true);

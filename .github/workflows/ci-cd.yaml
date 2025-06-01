@@ -1,0 +1,22 @@
+name: Demo WebApp CI/CD
+
+on:
+  workflow_dispatch:  
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main ]
+
+jobs:
+  uses: gbh-recruitment/ismael-ortiz-montero-ismaelortiz87-2025-5-29-senior-devops-challenge/.github/workflows/standard-docker-build-deploy.yml@main
+  with:
+    app_name: "webApp"
+    dockerfile_path: "Dockerfile"
+    helm_chart_repo: "gbh-recruitment/ismael-ortiz-montero-ismaelortiz87-2025-5-29-senior-devops-challenge"
+    helm_chart_path: "part_2/helm/generic-web-chart"
+    helm_release_name: "demo-webapp"
+    k8s_namespace: "gbh"
+    deploy_on_main: true
+  secrets:
+    KUBECONFIG: ${{ secrets.KUBECONFIG }}
+    HELM_REPO_TOKEN: ${{ secrets.PAT_TOKEN }}

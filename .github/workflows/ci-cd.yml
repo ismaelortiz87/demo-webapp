@@ -90,18 +90,6 @@ jobs:
         token: ${{ secrets.PAT_TOKEN }}
         path: helm-repo
 
-    - name: Verify Helm chart exists
-      run: |
-        echo "Checking for Helm chart at: ./helm-repo/part_2/helm/generic-web-chart"
-        ls -la ./helm-repo/part_2/helm/generic-web-chart/
-        
-        if [ ! -f "./helm-repo/part_2/helm/generic-web-chart/Chart.yaml" ]; then
-          echo "ERROR: Chart.yaml not found at ./helm-repo/part_2/helm/generic-web-chart/"
-          exit 1
-        fi
-        
-        echo "Chart.yaml found, proceeding with deployment"
-
     - name: Deploy WebApp with Helm
       run: |
         # Extract image information

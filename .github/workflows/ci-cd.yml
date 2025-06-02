@@ -104,14 +104,13 @@ jobs:
         echo "Image Tag: $IMAGE_VERSION"
         echo "API URL: $REACT_APP_API_URL"
         
-        # Deploy using Helm with correct webapp values
         helm upgrade --install demo-webapp ./helm-repo/part_2/helm/generic-web-chart \
           --namespace gbh \
           --create-namespace \
-          --set image.repository=$IMAGE_REPO \
-          --set image.tag=$IMAGE_VERSION \
-          --set image.pullPolicy=Always \
-          --set env.REACT_APP_API_URL=$REACT_APP_API_URL \
+          --set webapp.image.repository=$IMAGE_REPO \
+          --set webapp.image.tag=$IMAGE_VERSION \
+          --set webapp.image.pullPolicy=Always \
+          --set webapp.env.REACT_APP_API_URL="$REACT_APP_API_URL" \
           --timeout=10m \
           --wait
       # -f ./helm-repo/part_2/helm/generic-web-chart/values-webapp.yaml \

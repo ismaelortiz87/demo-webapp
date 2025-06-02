@@ -107,6 +107,7 @@ jobs:
         helm upgrade --install demo-webapp ./helm-repo/part_2/helm/generic-web-chart \
           --namespace gbh \
           --create-namespace \
+          --set fullnameOverride=webapp \
           --set webapp.image.repository=$IMAGE_REPO \
           --set webapp.image.tag=$IMAGE_VERSION \
           --set webapp.image.pullPolicy=Always \

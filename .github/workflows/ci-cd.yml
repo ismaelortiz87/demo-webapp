@@ -109,10 +109,10 @@ jobs:
           --namespace gbh \
           --create-namespace \
           --set fullnameOverride=webapp \
-          --set webapp.image.repository=$IMAGE_REPO \
-          --set webapp.image.tag=$IMAGE_VERSION \
-          --set webapp.image.pullPolicy=Always \
-          --set webapp.env.REACT_APP_API_URL="$REACT_APP_API_URL" \
+          --set image.repository=$IMAGE_REPO \
+          --set image.tag=$IMAGE_VERSION \
+          --set image.pullPolicy=Always \
+          --set env.REACT_APP_API_URL="$REACT_APP_API_URL" \
           --timeout=10m \
           --wait
       # -f ./helm-repo/part_2/helm/generic-web-chart/values-webapp.yaml \

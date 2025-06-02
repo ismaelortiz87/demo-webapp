@@ -104,8 +104,7 @@ jobs:
         echo "Image Tag: $IMAGE_VERSION"
         echo "API URL: $REACT_APP_API_URL"
         
-        helm upgrade --install demo-webapp ./helm-repo/part_2/helm/generic-web-chart \
-          --values ./helm-repo/part_2/helm/generic-web-chart/values-webapp.yaml \
+        helm upgrade --install demo-webapp ./helm-repo/part_2/helm/generic-web-chart -f ./helm-repo/part_2/helm/generic-web-chart/values-webapp.yaml \
           --namespace gbh \
           --set fullnameOverride=webapp \
           --set image.repository=$IMAGE_REPO \

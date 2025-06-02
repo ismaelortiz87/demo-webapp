@@ -15,45 +15,55 @@ jobs:
   build:
     name: Build WebApp
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write  
     outputs:
       image-tag: ${{ steps.meta.outputs.tags }}
       image-digest: ${{ steps.build.outputs.digest }}
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Log in to Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: justranacr
-        password: ${{ secrets.ACR_PASSWORD }}
+      - name: Login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}        
+          username: justranacr
+          password: ${{ secrets.ACR_PASSWORD }}
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Extract metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-        tags: |
-          type=raw,value=${{ github.run_number }}
-          type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/setup-buildx-action@v3
 
-    - name: Build and push Docker image
-      id: build
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./Dockerfile
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ github.run_number }}
+            type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: Build & push image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+    
   deploy:
     name: Deploy WebApp
     runs-on: ubuntu-latest
@@ -115,13 +125,3 @@ jobs:
           --set env.REACT_APP_API_URL="$REACT_APP_API_URL" \
           --timeout=10m \
           --wait
-        # helm upgrade --install demo-webapp ./helm-repo/part_2/helm/generic-web-chart -f ./helm-repo/part_2/helm/generic-web-chart/values-webapp.yaml \
-        #   --namespace gbh \
-        #   --set fullnameOverride=webapp \
-        #   --set image.repository=$IMAGE_REPO \
-        #   --set image.tag=$IMAGE_VERSION \
-        #   --set image.pullPolicy=Always \
-        #   --set env.REACT_APP_API_URL="$REACT_APP_API_URL" \
-        #   --timeout=10m \
-        #   --wait
-      # -f ./helm-repo/part_2/helm/generic-web-chart/values-webapp.yaml \

@@ -1,0 +1,126 @@
+name: Demo WebApp CI/CD
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main ]
+
+env:
+  REGISTRY: justranacr.azurecr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    name: Build WebApp
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: justranacr
+        password: ${{ secrets.ACR_PASSWORD }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=raw,value=${{ github.run_number }}
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy WebApp
+    runs-on: ubuntu-latest
+    needs: build
+    # Deploy on push to main branch OR manual trigger
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: '3.12.0'
+
+    - name: Configure kubectl
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+        chmod 600 $HOME/.kube/config
+
+    - name: Verify cluster connection
+      run: |
+        kubectl cluster-info
+        kubectl get nodes
+
+    - name: Checkout Helm chart repository
+      uses: actions/checkout@v4
+      with:
+        repository: gbh-recruitment/ismael-ortiz-montero-ismaelortiz87-2025-5-29-senior-devops-challenge
+        token: ${{ secrets.PAT_TOKEN }}
+        path: helm-repo
+
+    - name: Verify Helm chart exists
+      run: |
+        echo "Checking for Helm chart at: ./helm-repo/part_2/helm/generic-web-chart"
+        ls -la ./helm-repo/part_2/helm/generic-web-chart/
+        
+        if [ ! -f "./helm-repo/part_2/helm/generic-web-chart/Chart.yaml" ]; then
+          echo "ERROR: Chart.yaml not found at ./helm-repo/part_2/helm/generic-web-chart/"
+          exit 1
+        fi
+        
+        echo "Chart.yaml found, proceeding with deployment"
+
+    - name: Deploy WebApp with Helm
+      run: |
+        # Extract image information
+        IMAGE_TAG="${{ needs.build.outputs.image-tag }}"
+        FULL_IMAGE=$(echo $IMAGE_TAG | cut -d',' -f1)
+        IMAGE_REPO=$(echo $FULL_IMAGE | cut -d':' -f1)
+        IMAGE_VERSION=$(echo $FULL_IMAGE | cut -d':' -f2)
+        REACT_APP_API_URL="http://$(kubectl get svc nginx-ingress-ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')/api"
+
+        echo "Deploying WebApp with image: $FULL_IMAGE"
+        
+        # Deploy using Helm
+        helm upgrade --install demo-api ./helm-repo/part_2/helm/generic-web-chart \
+          -f ./helm-repo/part_2/helm/generic-web-chart/values-webapp.yaml \
+          --namespace gbh \
+          --create-namespace \
+          --set api.image.repository=$IMAGE_REPO \
+          --set api.image.tag=$IMAGE_VERSION \
+          --set api.image.pullPolicy=Always \
+          --set api.image.pullPolicy=Always \
+          --timeout=10m \
+          --wait

@@ -104,13 +104,15 @@ jobs:
         echo "Image Tag: $IMAGE_VERSION"
         echo "API URL: $REACT_APP_API_URL"
         
-        helm upgrade --install demo-webapp ./helm-repo/part_2/helm/generic-web-chart -f ./helm-repo/part_2/helm/generic-web-chart/values-webapp.yaml \
-          --namespace gbh \
-          --set fullnameOverride=webapp \
-          --set image.repository=$IMAGE_REPO \
-          --set image.tag=$IMAGE_VERSION \
-          --set image.pullPolicy=Always \
-          --set env.REACT_APP_API_URL="$REACT_APP_API_URL" \
-          --timeout=10m \
-          --wait
+        helm upgrade --install demo-webapp ./helm-repo/part_2/helm/generic-web-chart --namespace gbh -f ./helm-repo/part_2/helm/generic-web-chart/values-webapp.yaml --set fullnameOverride=webapp --set image.repository=$IMAGE_REPO --set image.tag=$IMAGE_VERSION --set image.pullPolicy=Always --set env.REACT_APP_API_URL="$REACT_APP_API_URL" --timeout=10m --wait
+
+        # helm upgrade --install demo-webapp ./helm-repo/part_2/helm/generic-web-chart -f ./helm-repo/part_2/helm/generic-web-chart/values-webapp.yaml \
+        #   --namespace gbh \
+        #   --set fullnameOverride=webapp \
+        #   --set image.repository=$IMAGE_REPO \
+        #   --set image.tag=$IMAGE_VERSION \
+        #   --set image.pullPolicy=Always \
+        #   --set env.REACT_APP_API_URL="$REACT_APP_API_URL" \
+        #   --timeout=10m \
+        #   --wait
       # -f ./helm-repo/part_2/helm/generic-web-chart/values-webapp.yaml \
